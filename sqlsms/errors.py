@@ -59,10 +59,11 @@ class Logger(object):
 class SmsError(Exception):
     __error__ = {
 
-        1: "termux api not installed",
-        2: "text retrieve error",
-        3: "database creation error",
-        4: "Internal error"
+        1: "Termux api not installed",
+        2: "Text retrieve error",
+        3: "Database creation error",
+        4: "Internal error",
+        5: "Invalid datatype",
         
     }
  

@@ -26,7 +26,7 @@ def handlespace(w):  # for correcting joined args
 
 def Print(*args):
     if args:
-        output = "  ".join(args)
+        output = "  ".join((str(x) for x in args))
         if shell:  # check for shell:: Python IDLE will return None
             rootLogger.info(output)
         else:

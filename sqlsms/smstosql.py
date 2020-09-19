@@ -35,26 +35,33 @@ class SQL(Base):
 class SMS(SQL):
     def __init__(self):
         # create the table name to store the sms
-        self.sms = self.text_message()
+        self.sms = self._get_textmessages()
         super(SMS, self).__init__()
 
     @classmethod
-    def text_message(cls, limit=5000, box="all"):
+    def _get_textmessages(cls, *args, **kwargs):
         """ 
             Retrieves text messages using android termux-api 
 
-            :param limit:
+            :option limit:
                 Number of text message to retrieve (default 5000)
         
-            :param box:
+            :option box:
                 Type of text message to return 
                     all - returns outbox,inbox,and draft 
                     inbox  - return text messages from inbox only
                     outbox  - return text messages from outbox only
                     draft - return text messages from draft only
+
             :return dict:
         """
         # invoke termux sms api to generate the sms list
+        limit = kwargs.get('limit',5000) 
+        try:
+            limit+= 1
+        except:
+            raise SmsError(5,"limit keyword must be number")
+        box = kwargs.get('box','all')
         cmd = "termux-sms-list -dl {} -nt {}".format(limit, box)
 
         try:
@@ -78,18 +85,33 @@ class SMS(SQL):
             [text.update(id=count) for count, text in enumerate(sms, start=1)]
             return sms
 
-    def create(self):
-        """ Populate the database with the text messages"""
+    def migrate(self, limit=5000, box="all"):
+        """ 
+        Populate the database with the text messages
+
+            :param limit:
+                Number of text message to retrieve (default 5000)
+        
+            :param box:
+                Type of text message to return 
+                    all - returns outbox,inbox,and draft 
+                    inbox  - return text messages from inbox only
+                    outbox  - return text messages from outbox only
+                    draft - return text messages from draft only
+
+        """
         session = self.session()  # inherited from SQL
         self.count = 1
-        text = self.text_message()
-        self.thread = Threader(self.run, text, session)
+        text = self._get_textmessages(limit=limit,box=box)
+        self.thread = Threader(self.setup, text, session)
         self.thread.run()
         session.commit()
 
-    def run(self, sms, session=None):  # sms is one sms at a time
-        """ Populate the database with the text messages
-            :param sms: text to put in database
+
+    def setup(self, sms, session=None):  # sms is one sms at a time
+        """ Setup text messages queue.
+
+            :param sms: text to put in queue
                   type: dict 
 
             :param: session: sessionmaker object (pass only when threading')
@@ -104,13 +126,12 @@ class SMS(SQL):
         self.count += 1
         for k, v in sms.items():
             setattr(sequel, k, v)
-            Print(k, v)
         session.add(sequel)
 
 
 def main():
     try:
-        SMS()
+        SMS().migrate()
     except SmsError as e:
         Print(e)
         Print(
