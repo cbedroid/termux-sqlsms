@@ -5,11 +5,12 @@ from queue import Queue
 from time import sleep
 
 
-class Threader():
+class Threader:
     THREAD_TOTAL = 75
-    def __init__(self,employer,jobs,extra=False):
-        self.jobs = jobs # jobs to put in queue
-        self.employer = employer # main function to perform jobs
+
+    def __init__(self, employer, jobs, extra=False):
+        self.jobs = jobs  # jobs to put in queue
+        self.employer = employer  # main function to perform jobs
         self.queue = Queue()
         self.extra = extra
 
@@ -27,35 +28,33 @@ class Threader():
     def get_queue(self):
         if not self.queue.empty():
             return self.queue.get()
-            
 
     def start_work(self):
         while True:
             work = self.get_queue
             if self.queue.empty() or work is None:
-                break 
+                break
 
-            working = self.employer(work,self.extra)
+            working = self.employer(work, self.extra)
             self.results.append(working)
-           
-           # if there is no more work then break
-           # just an extra precaution, queue.empty should handle this above
+
+            # if there is no more work then break
+            # just an extra precaution, queue.empty should handle this above
             try:
                 self.queue.task_done()
             except:
-                return 
+                return
 
     def threadit(self):
         for _ in range(self.THREAD_TOTAL):
-            t = threading.Thread(target= self.start_work)
-            t.daemon=True
+            t = threading.Thread(target=self.start_work)
+            t.daemon = True
             t.start()
             t.join()
             self.process_ranned.append(t)
-            
+
     def run(self):
         self.set_queue()
         self.threadit()
-        print('Done')
+        print("Done")
         return self.results
-        

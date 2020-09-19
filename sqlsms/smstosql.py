@@ -40,8 +40,7 @@ class SMS(SQL):
 
     @classmethod
     def _get_textmessages(cls, *args, **kwargs):
-        """ 
-            Retrieves text messages using android termux-api 
+        """ Retrieves text messages using android termux-api 
 
             :option limit:
                 Number of text message to retrieve (default 5000)
@@ -56,12 +55,12 @@ class SMS(SQL):
             :return dict:
         """
         # invoke termux sms api to generate the sms list
-        limit = kwargs.get('limit',5000) 
+        limit = kwargs.get("limit", 5000)
         try:
-            limit+= 1
+            limit += 1
         except:
-            raise SmsError(5,"limit keyword must be number")
-        box = kwargs.get('box','all')
+            raise SmsError(5, "limit keyword must be number")
+        box = kwargs.get("box", "all")
         cmd = "termux-sms-list -dl {} -nt {}".format(limit, box)
 
         try:
@@ -86,38 +85,33 @@ class SMS(SQL):
             return sms
 
     def migrate(self, limit=5000, box="all"):
-        """ 
-        Populate the database with the text messages
+        """ Populate the database with the text messages
 
-            :param limit:
-                Number of text message to retrieve (default 5000)
-        
-            :param box:
-                Type of text message to return 
-                    all - returns outbox,inbox,and draft 
-                    inbox  - return text messages from inbox only
-                    outbox  - return text messages from outbox only
-                    draft - return text messages from draft only
-
+        Args:
+            limit (int, optional): Total number of text message to retrieve. 
+                  Defaults to 5000.
+            box (str, optional): Type of text message to return. 
+                  all - returns outbox,inbox,and draft 
+                  inbox  - return text messages from inbox only
+                  outbox  - return text messages from outbox only
+                  draft - return text messages from draft only
+              Defaults to "all".
         """
         session = self.session()  # inherited from SQL
         self.count = 1
-        text = self._get_textmessages(limit=limit,box=box)
+        text = self._get_textmessages(limit=limit, box=box)
         self.thread = Threader(self.setup, text, session)
         self.thread.run()
         session.commit()
 
-
     def setup(self, sms, session=None):  # sms is one sms at a time
         """ Setup text messages queue.
 
-            :param sms: text to put in queue
-                  type: dict 
-
-            :param: session: sessionmaker object (pass only when threading')
-                             by default, the class object will handle
-                             the sessionmaker
-                    default: None,
+        Args:
+            sms (json): text to place in queue
+            session (sqlalchemy.sessionmaker, option) sessionmaker object.
+                    Passed only when threading
+                    Defaults to sqlalchemy.sessionmaker
         """
         if not session:
             session = self.session
